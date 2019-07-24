@@ -37,8 +37,8 @@ if(!cereal.open(device, SerialIO.B9600, SerialIO.ASCII))
 }
 
 // Set up the music generators
-SinOsc osc => Gain g => dac;
-g.gain(0.8);
+SqrOsc osc => dac;
+0.3 => float onGain;
 
 while(true)
 {
@@ -50,7 +50,14 @@ while(true)
         StringTokenizer tok;
         tok.set(line);
         Std.atoi(tok.next()) => int pos;
+        chout <= "pos: " <= pos <= IO.newline();
         Std.atoi(tok.next()) => int val;
-        osc.freq(Std.mtof(pos)); // Change sin wave frequency
+        chout <= "val: " <= val <= IO.newline();
+        Std.mtof((pos+10)*4) => float f;
+        chout <= "Freq: " <= f <= IO.newline();
+        osc.freq(f); // Change sin wave frequency
+        onGain => osc.gain;
+        0.1 :: second => now;
+        
     }
 }
