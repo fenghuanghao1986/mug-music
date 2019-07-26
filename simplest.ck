@@ -1,15 +1,3 @@
-//******************************************************************
-// Bonnie Eisenman (bmeisenm@)
-// Harvest Zhang (hlzhang@)
-// 9 March 2014
-// 
-// Demonstration of bare minimum necessary to interface w/ Touche.
-//
-// Run as: chuck simplest.ck: [serialport]
-// If you don't know the serial port number, run as chuck simplest.ck
-// and select the correct USB port number.
-//******************************************************************
-
 SerialIO.list() @=> string list[];
 
 for(int i; i < list.cap(); i++)
@@ -37,8 +25,15 @@ if(!cereal.open(device, SerialIO.B9600, SerialIO.ASCII))
 }
 
 // Set up the music generators
-SqrOsc osc => dac;
-0.3 => float onGain;
+// synchronize to period
+.5::second => dur T;
+T - (now % T) => now;
+
+SinOsc s => JCRev r => dac;
+//.05 => s.gain;
+.25 => r.mix;
+
+[60, 62, 64, 65, 67, 69, 71, 72, 74, 76, 77] @=> int xylo[];
 
 while(true)
 {
@@ -47,17 +42,23 @@ while(true)
 
     if(line$Object != null) {
         chout <= "read line: " <= line <= IO.newline();
+        
         StringTokenizer tok;
         tok.set(line);
-        Std.atoi(tok.next()) => int pos;
+        Std.atoi(line) => int pos;
         chout <= "pos: " <= pos <= IO.newline();
-        Std.atoi(tok.next()) => int val;
-        chout <= "val: " <= val <= IO.newline();
-        Std.mtof((pos+10)*4) => float f;
-        chout <= "Freq: " <= f <= IO.newline();
-        osc.freq(f); // Change sin wave frequency
-        onGain => osc.gain;
-        0.1 :: second => now;
         
+        Std.mtof(xylo[pos]) => float f;
+        chout <= "Freq: " <= f <= IO.newline();
+        s.freq(f); // Change sin wave frequency 
+        .05 => s.gain;
+        0 => s.phase;
+
+        // advance time
+        // note: Math.randomf() returns value between 0 and 1
+        if( Math.randomf() > .25 ) .25::T => now;
+        else .5::T => now;
+           
     }
+    chout <= "play done" <= IO.newline();
 }
